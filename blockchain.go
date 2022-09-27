@@ -13,7 +13,7 @@ type Block struct {
 	nonce        int
 	previousHash [32]byte
 	timestamp    int64
-	transactions []string
+	transactions []*Transaction
 }
 
 func NewBlock(nonce int, previousHash [32]byte) *Block {
@@ -29,7 +29,10 @@ func (b *Block) Print() {
 	fmt.Printf("timestamp	%d\n", b.timestamp)
 	fmt.Printf("nonce		%d\n", b.nonce)
 	fmt.Printf("previousHash	%x\n", b.previousHash)
-	fmt.Printf("transactions	%s\n", b.transactions)
+
+	for _, tr := range b.transactions {
+		tr.Print()
+	}
 }
 
 type Blockchain struct {
@@ -69,10 +72,10 @@ func (b *Block) Hash() [32]byte {
 
 func (b *Block) MarshalJson() ([]byte, error) {
 	return json.Marshal(struct {
-		Timestamp    int64    `json:"timestamp"`
-		Nonce        int      `json:"nonce"`
-		PreviousHash [32]byte `json:"previousHash"`
-		Transactions []string `json:"transactions"`
+		Timestamp    int64          `json:"timestamp"`
+		Nonce        int            `json:"nonce"`
+		PreviousHash [32]byte       `json:"previousHash"`
+		Transactions []*Transaction `json:"transactions"`
 	}{
 		Timestamp:    b.timestamp,
 		Nonce:        b.nonce,
@@ -92,6 +95,30 @@ func (bc *Blockchain) AddBlock() *Block {
 	return b
 }
 
+type Transaction struct {
+	senderBlockchainAddress    string
+	recipientBlockchainAddress string
+	value                      float32
+}
+
+func (b *Block) NewTransaction(sender string, receiver string, value float32) *Transaction {
+	transaction := new(Transaction)
+	transaction.recipientBlockchainAddress = receiver
+	transaction.senderBlockchainAddress = sender
+	transaction.value = value
+
+	b.transactions = append(b.transactions, transaction)
+
+	return transaction
+}
+
+func (tr *Transaction) Print() {
+	fmt.Printf("%s\n", strings.Repeat("=", 40))
+	fmt.Printf(" Sender: %s\n", tr.senderBlockchainAddress)
+	fmt.Printf(" Recipient: %s\n", tr.recipientBlockchainAddress)
+	fmt.Printf(" Value: %.1f\n", tr.value)
+}
+
 func init() {
 	log.SetPrefix("Blockchain: ")
 }
@@ -99,8 +126,8 @@ func init() {
 func main() {
 	bc := NewBlockchain()
 
-	bc.AddBlock()
-	bc.Print()
-	bc.AddBlock()
+	b := bc.AddBlock()
+	b.NewTransaction("A", "B", 1.0)
+	b.NewTransaction("B", "A", 3.0)
 	bc.Print()
 }
