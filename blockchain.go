@@ -145,6 +145,24 @@ func (bc *Blockchain) Mining() bool {
 	return true
 }
 
+func (bc *Blockchain) BalanceOf(blockchainAddress string) float32 {
+	var balance float32 = 0.0
+
+	for _, b := range bc.chain {
+		for _, tr := range b.transactions {
+			if tr.recipientBlockchainAddress == blockchainAddress {
+				balance = balance + tr.value
+			}
+
+			if tr.senderBlockchainAddress == blockchainAddress {
+				balance = balance - tr.value
+			}
+		}
+	}
+
+	return balance
+}
+
 type Transaction struct {
 	senderBlockchainAddress    string
 	recipientBlockchainAddress string
@@ -195,4 +213,5 @@ func main() {
 	bc.AddTransaction("X", "Y", 4)
 	bc.Mining()
 	bc.Print()
+	fmt.Println(bc.BalanceOf("A"))
 }
