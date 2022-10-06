@@ -1,10 +1,9 @@
-package main
+package block
 
 import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 )
@@ -195,23 +194,4 @@ func (tr *Transaction) MarshalJSON() ([]byte, error) {
 		Recipient: tr.recipientBlockchainAddress,
 		Value:     tr.value,
 	})
-}
-
-func init() {
-	log.SetPrefix("Blockchain: ")
-}
-
-func main() {
-	bcAddress := "my_blockchain"
-	bc := NewBlockchain(bcAddress)
-
-	bc.AddTransaction("A", "B", 1.0)
-	bc.AddTransaction("B", "A", 3.0)
-	bc.Mining()
-
-	bc.AddTransaction("C", "D", 4.0)
-	bc.AddTransaction("X", "Y", 4)
-	bc.Mining()
-	bc.Print()
-	fmt.Println(bc.BalanceOf("A"))
 }
