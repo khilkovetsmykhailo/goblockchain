@@ -12,6 +12,6 @@ func init() {
 
 func main() {
 	w1 := wallet.NewWallet()
-	fmt.Println(w1.PrivateKeyStr())
-	fmt.Println(w1.PublicKeyStr())
+	t := wallet.NewTransaction(w1.PrivateKey(), w1.PublicKey(), w1.BlockchainAddress(), "B", 1.0)
+	fmt.Println(t.GenerateSignature().String())
 }
