@@ -1,9 +1,12 @@
 package block
 
 import (
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"goblockchain/utils"
+	"log"
 	"strings"
 	"time"
 )
@@ -104,6 +107,13 @@ func (bc *Blockchain) AddBlock() *Block {
 	return b
 }
 
+func (bc *Blockchain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transaction) bool {
+	m, _ := json.Marshal(t)
+	h := sha256.Sum256(m)
+
+	return ecdsa.Verify(senderPublicKey, h[:], s.R, s.S)
+}
+
 func (bc *Blockchain) CopyTransactionPool() []*Transaction {
 	transactions := make([]*Transaction, 0)
 
@@ -136,7 +146,7 @@ func (bc *Blockchain) ProofOfWork() int {
 }
 
 func (bc *Blockchain) Mining() bool {
-	bc.AddTransaction(MINER_SENDER, bc.blockchainAddress, MINING_REWARD)
+	bc.AddTransaction(MINER_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
@@ -172,9 +182,27 @@ func NewTransaction(sender string, recipient string, value float32) *Transaction
 	return &Transaction{sender, recipient, value}
 }
 
-func (bc *Blockchain) AddTransaction(sender string, recipient string, value float32) {
+func (bc *Blockchain) AddTransaction(sender string, recipient string, value float32, publicKey *ecdsa.PublicKey, s *utils.Signature) bool {
 	t := NewTransaction(sender, recipient, value)
-	bc.transactionPool = append(bc.transactionPool, t)
+
+	if sender == MINER_SENDER {
+		bc.transactionPool = append(bc.transactionPool, t)
+		return true
+	}
+
+	if bc.BalanceOf(sender) < value {
+		log.Println("ERROR: No balance")
+		return false
+	}
+
+	if bc.VerifyTransactionSignature(publicKey, s, t) {
+		bc.transactionPool = append(bc.transactionPool, t)
+		return true
+	} else {
+		log.Println("ERROR: Verify Transaction")
+	}
+
+	return false
 }
 
 func (tr *Transaction) Print() {
