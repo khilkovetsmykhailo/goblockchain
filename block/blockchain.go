@@ -67,6 +67,14 @@ func NewBlockchain(blockchainAddress string) *Blockchain {
 	return bc
 }
 
+func (bc *Blockchain) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Blocks []*Block `json:"chains"`
+	}{
+		Blocks: bc.chain,
+	})
+}
+
 func (bc *Blockchain) Print() {
 	for i, block := range bc.chain {
 		fmt.Printf("%s chain %d %s\n", strings.Repeat("=", 25), i, strings.Repeat("=", 25))
@@ -77,21 +85,21 @@ func (bc *Blockchain) Print() {
 }
 
 func (b *Block) Hash() [32]byte {
-	m, _ := b.MarshalJson()
+	m, _ := b.MarshalJSON()
 
 	return sha256.Sum256(m)
 }
 
-func (b *Block) MarshalJson() ([]byte, error) {
+func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Timestamp    int64          `json:"timestamp"`
 		Nonce        int            `json:"nonce"`
-		PreviousHash [32]byte       `json:"previousHash"`
+		PreviousHash string         `json:"previousHash"`
 		Transactions []*Transaction `json:"transactions"`
 	}{
 		Timestamp:    b.timestamp,
 		Nonce:        b.nonce,
-		PreviousHash: b.previousHash,
+		PreviousHash: fmt.Sprintf("%x", b.previousHash),
 		Transactions: b.transactions,
 	})
 }
